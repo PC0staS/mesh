@@ -1,10 +1,13 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/PC0staS/mesh/internal/client"
+	"github.com/PC0staS/mesh/internal/monitor"
 )
 
 func List() {
@@ -12,7 +15,9 @@ func List() {
 	reloadRequest := &client.Request{
 		Command: "reload",
 	}
-	client.SendRequest(reloadRequest) // Ignora errores, es solo para sincronizar
+	client.SendRequest(reloadRequest)
+	time.Sleep(100 * time.Millisecond)
+
 	request := &client.Request{
 		Command: "status",
 	}
@@ -29,12 +34,10 @@ func List() {
 		return
 	}
 
-	// Parsea response.Data a []ServerState
-	states, err := parseServerStates(response.Data)
-	if err != nil {
-		fmt.Printf("Error parsing response: %v\n", err)
-		return
-	}
+	// Parsea directamente a []monitor.ServerState
+	jsonBytes, _ := json.Marshal(response.Data)
+	var states []monitor.ServerState
+	json.Unmarshal(jsonBytes, &states)
 
 	if len(states) == 0 {
 		fmt.Println("No servers configured")
