@@ -32,12 +32,15 @@ func PingServer(host string, checkType string, timeout time.Duration) PingResult
 
 // pingTCP intenta conectar por TCP
 func pingTCP(host string, timeout time.Duration, start time.Time) PingResult {
-	// Limpia la URL
 	host = strings.TrimPrefix(host, "http://")
 	host = strings.TrimPrefix(host, "https://")
 	host = strings.TrimPrefix(host, "tcp://")
 
-	// Si el host ya tiene puerto, úsalo. Si no, añade :80
+	// Quita ruta si existe
+	if idx := strings.Index(host, "/"); idx != -1 {
+		host = host[:idx]
+	}
+
 	if !strings.Contains(host, ":") {
 		host = host + ":80"
 	}
@@ -61,16 +64,24 @@ func pingTCP(host string, timeout time.Duration, start time.Time) PingResult {
 	}
 }
 
-// pingHTTP intenta hacer HTTP GET
+// pingHTTP intenta hacer conexión HTTP
 func pingHTTP(host string, timeout time.Duration, start time.Time) PingResult {
 	// Limpia la URL
-	if !strings.HasPrefix(host, "http://") && !strings.HasPrefix(host, "https://") {
-		host = "http://" + host
+	host = strings.TrimPrefix(host, "http://")
+	host = strings.TrimPrefix(host, "https://")
+	host = strings.TrimPrefix(host, "/")  // ← Añade esto
+	
+	// Quita ruta si existe
+	if idx := strings.Index(host, "/"); idx != -1 {
+		host = host[:idx]
 	}
 
-	// Crea cliente con timeout
-	client := &net.Dialer{Timeout: timeout}
-	conn, err := client.Dial("tcp", extractHostPort(host))
+	// Si no tiene puerto, añade :80
+	if !strings.Contains(host, ":") {
+		host = host + ":80"
+	}
+
+	conn, err := net.DialTimeout("tcp", host, timeout)
 	if err != nil {
 		return PingResult{
 			Timestamp:    start,
