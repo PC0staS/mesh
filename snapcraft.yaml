@@ -1,6 +1,6 @@
 name: mesh
 base: core24
-version: "0.0.0"
+version: "1.0.0"
 summary: MESH - Uptime Monitor Daemon
 description: |
   MESH is a lightweight uptime monitoring daemon with TUI.
