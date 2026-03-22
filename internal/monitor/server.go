@@ -7,4 +7,5 @@ type Server struct{
 	Interval int `json:"interval"`
 	Timeout int `json:"timeout"`
 	Enabled bool `json:"enabled"`
+	Webhook string `json:"webhook,omitempty"`
 }

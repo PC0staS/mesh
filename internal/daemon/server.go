@@ -23,17 +23,18 @@ func StartDaemon() {
 		return
 	}
 
+	// Si no hay servidores, avisa pero sigue (no retorna)
 	if len(cfg.Servers) == 0 {
-		fmt.Println("No servers configured. Add some with: mesh add")
-		return
+		fmt.Println("⚠️  No servers configured yet. Add some with: mesh add")
+		// Continúa igual, solo sin hacer pings
+	} else {
+		// Inicia pinging solo si hay servidores
+		StartPinging(cfg)
 	}
 
-	// Inicia pinging
-	StartPinging(cfg)
-	// 1. Elimina socket anterior si existe
+	// El resto del código igual...
 	os.Remove(SocketPath)
 
-	// 2. Crea listener en el socket
 	listener, err := net.Listen("unix", SocketPath)
 	if err != nil {
 		fmt.Printf("Error starting daemon: %v\n", err)
@@ -44,7 +45,6 @@ func StartDaemon() {
 
 	fmt.Printf("✅ Daemon started, listening on %s\n", SocketPath)
 
-	// 3. Loop infinito: acepta conexiones
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -52,7 +52,6 @@ func StartDaemon() {
 			continue
 		}
 
-		// 4. Maneja cada conexión en goroutine
 		go handleConnection(conn)
 	}
 }
@@ -90,6 +89,8 @@ func handleConnection(conn net.Conn) {
 		response = handleAdd(request)
 	case "remove":
 		response = handleRemove(request)
+	case "reload":
+    response = handleReload()
 	default:
 		response = &client.Response{
 			Success: false,
@@ -104,6 +105,13 @@ func handleConnection(conn net.Conn) {
 
 // handleStatus devuelve el estado actual
 func handleStatus() *client.Response {
+	if daemonState == nil {
+		return &client.Response{
+			Success: true,
+			Data:    []interface{}{}, // Lista vacía
+		}
+	}
+
 	states := daemonState.GetAllStates()
 
 	return &client.Response{
@@ -111,7 +119,23 @@ func handleStatus() *client.Response {
 		Data:    states,
 	}
 }
+func handleReload() *client.Response {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return &client.Response{
+			Success: false,
+			Message: fmt.Sprintf("Error loading config: %v", err),
+		}
+	}
 
+	// Reinicia pinging con nueva config
+	StartPinging(cfg)
+
+	return &client.Response{
+		Success: true,
+		Message: "Config reloaded successfully",
+	}
+}
 // handleAdd añade un servidor
 func handleAdd(request client.Request) *client.Response {
 	// Convierte request.Server a monitor.Server
@@ -130,6 +154,7 @@ func handleAdd(request client.Request) *client.Response {
 		Interval: getInt(serverMap, "interval"),
 		Timeout:  getInt(serverMap, "timeout"),
 		Enabled:  getBool(serverMap, "enabled"),
+		Webhook:  getString(serverMap, "webhook"),
 	}
 
 	// Carga config actual
@@ -239,7 +264,12 @@ var daemonState *DaemonState
 
 // StartPinging inicia goroutines para hacer ping a cada servidor
 func StartPinging(cfg *config.Config) {
-	daemonState = NewDaemonState(100) // Máx 100 pings por servidor
+	daemonState = NewDaemonState(100)
+
+	if len(cfg.Servers) == 0 {
+		return // Sin servidores, nada que hacer
+	}
+
 
 	// Inicializa estado para cada servidor
 	for _, server := range cfg.Servers {
@@ -269,6 +299,8 @@ func pingLoop(server monitor.Server) {
 	ticker := time.NewTicker(time.Duration(server.Interval) * time.Second)
 	defer ticker.Stop()
 
+	var lastStatus *bool // Guarda estado anterior
+
 	for range ticker.C {
 		// Hace ping
 		result := monitor.PingServer(server.Host, time.Duration(server.Timeout)*time.Second)
@@ -276,7 +308,17 @@ func pingLoop(server monitor.Server) {
 		// Añade resultado al estado
 		daemonState.AddResult(server.Name, result)
 
-		// Log (opcional, para debugging)
+		// Obtiene estado actualizado
+		state := daemonState.GetServerState(server.Name)
+
+		// Detecta cambio de estado
+		if lastStatus == nil || *lastStatus != state.Status {
+			fmt.Printf("[%s] 🔔 Status changed to %v\n", server.Name, state.Status)
+			SendWebhook(server, state) // ← Envía webhook
+			lastStatus = &state.Status
+		}
+
+		// Log (opcional)
 		if result.Success {
 			fmt.Printf("[%s] ✅ %s (%.2fms)\n", server.Name, server.Host, float64(result.ResponseTime.Milliseconds()))
 		} else {

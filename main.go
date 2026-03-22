@@ -28,6 +28,8 @@ func main() {
 		cmd.Start()
 	case "stop":
 		cmd.Stop()
+	case "reload":
+		cmd.Reload()
 	case "monitor":
 		cmd.Monitor()
 	default:

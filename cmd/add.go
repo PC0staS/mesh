@@ -114,17 +114,27 @@ func askEnabled() bool {
 	}
 	return enabledStr == "y" || enabledStr == "Y"
 }
+func askWebhook() string {
+	prompt := promptui.Prompt{
+		Label: "Webhook URL (leave empty for none)",
+	}
+	webhook, err := prompt.Run()
+	if err != nil {
+		return ""
+	}
+	
+	return webhook
+}
 
 func Add(){
-	var server monitor.Server
-
-	server = monitor.Server{
-	Name: askName(),
-	Host: askHost(),
-	Type: askType(),
-	Interval: askInterval(),
-	Timeout: askTimeout(),
-	Enabled: askEnabled(),
+	server := monitor.Server{
+		Name:          askName(),
+		Host:          askHost(),
+		Type:          askType(),
+		Interval:      askInterval(),
+		Timeout:       askTimeout(),
+		Enabled:       askEnabled(),
+		Webhook:       askWebhook(),
 	}
 
 	fmt.Printf("Adding server: %s (%s), type: %s, interval: %d, timeout: %d, enabled: %t\n", server.Name, server.Host, server.Type, server.Interval, server.Timeout, server.Enabled)
