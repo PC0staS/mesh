@@ -11,17 +11,12 @@ permissions:
 jobs:
     build:
         runs-on: ubuntu-latest
-        strategy:
-            matrix:
-                arch: [amd64]
 
         steps:
             - uses: actions/checkout@v4
 
             - uses: snapcore/action-build@v1
               id: build
-              with:
-                  architecture: ${{ matrix.arch }}
 
             - uses: snapcore/action-publish@v1
               env:
