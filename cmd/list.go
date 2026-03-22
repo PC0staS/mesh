@@ -8,6 +8,11 @@ import (
 )
 
 func List() {
+	// Primero, recarga la config en el daemon
+	reloadRequest := &client.Request{
+		Command: "reload",
+	}
+	client.SendRequest(reloadRequest) // Ignora errores, es solo para sincronizar
 	request := &client.Request{
 		Command: "status",
 	}

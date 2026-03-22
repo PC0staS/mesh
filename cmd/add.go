@@ -42,4 +42,6 @@ func Add() {
 	}
 
 	fmt.Printf("✅ %s\n", response.Message)
+
+	Reload() // Muestra status actualizado
 }

@@ -76,4 +76,7 @@ func Remove() {
 	}
 
 	fmt.Printf("✅ %s\n", removeResponse.Message)
+
+	Reload() // Muestra status actualizado
+
 }
