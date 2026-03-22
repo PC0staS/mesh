@@ -29,6 +29,7 @@ MESH is a CLI tool to monitor servers and services easily and extensibly, using 
         ```sh
         make build   # Build the binary
         make install # Install mesh to /usr/local/bin (may require sudo)
+        make install-daemon # Install the mesh.service - You can use this one for a complete install.
         ```
 
 This will copy the compiled mesh binary to /usr/local/bin so you can run mesh from anywhere.
