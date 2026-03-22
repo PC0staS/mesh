@@ -13,15 +13,13 @@ MESH is a CLI tool to monitor servers and services easily and extensibly, using 
 
 ## Installation
 
-### Install with Snap (Recommended)
+### Install with Snap (NOT Recommended) - Socket not working!!
 
-You can install Mesh easily using Snap:
+You can install Mesh using Snap:
 
 ```sh
 sudo snap install mesh
 ```
-
-This is the easiest way to get started on most Linux distributions that support Snap.
 
 ### Manual Installation
 
