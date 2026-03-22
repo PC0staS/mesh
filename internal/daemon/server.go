@@ -299,26 +299,23 @@ func pingLoop(server monitor.Server) {
 	ticker := time.NewTicker(time.Duration(server.Interval) * time.Second)
 	defer ticker.Stop()
 
-	var lastStatus *bool // Guarda estado anterior
+	var lastStatus *bool
 
 	for range ticker.C {
-		// Hace ping
-		result := monitor.PingServer(server.Host, time.Duration(server.Timeout)*time.Second)
+		// Pasa el tipo de check
+		result := monitor.PingServer(server.Host, server.Type, time.Duration(server.Timeout)*time.Second)
 
-		// Añade resultado al estado
 		daemonState.AddResult(server.Name, result)
 
-		// Obtiene estado actualizado
 		state := daemonState.GetServerState(server.Name)
 
-		// Detecta cambio de estado
 		if lastStatus == nil || *lastStatus != state.Status {
 			fmt.Printf("[%s] 🔔 Status changed to %v\n", server.Name, state.Status)
-			SendWebhook(server, state) // ← Envía webhook
+			SendWebhook(server, state)
 			lastStatus = &state.Status
 		}
 
-		// Log (opcional)
+		// Log
 		if result.Success {
 			fmt.Printf("[%s] ✅ %s (%.2fms)\n", server.Name, server.Host, float64(result.ResponseTime.Milliseconds()))
 		} else {
