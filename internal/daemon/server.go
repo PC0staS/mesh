@@ -296,6 +296,10 @@ func StartPinging(cfg *config.Config) {
 
 // pingLoop hace pings continuamente a un servidor
 func pingLoop(server monitor.Server) {
+	// Ping inicial inmediato
+	result := monitor.PingServer(server.Host, server.Type, time.Duration(server.Timeout)*time.Second)
+	daemonState.AddResult(server.Name, result)
+
 	ticker := time.NewTicker(time.Duration(server.Interval) * time.Second)
 	defer ticker.Stop()
 
