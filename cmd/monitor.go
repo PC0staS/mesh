@@ -46,7 +46,7 @@ func layout(g *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		v.Title = "MESH - Server Status"
+		v.Title = "MESH - Monitor Each Server Health"
 		v.Wrap = true
 		v.Autoscroll = false
 	}
