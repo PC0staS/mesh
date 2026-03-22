@@ -58,10 +58,10 @@ fi
 # Remove backup file after committing
 git add snapcraft.yaml
 git commit -m "Release ${TAG_VER}"
-git push origin "$CURRENT_BRANCH"
+git push master "$CURRENT_BRANCH"
 
 git tag -a "${TAG_VER}" -m "Release ${TAG_VER}"
-git push origin "${TAG_VER}"
+git push master "${TAG_VER}"
 
 echo "Release ${TAG_VER} created and pushed. Cleaning backup."
 rm -f snapcraft.yaml.bak
