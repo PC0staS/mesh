@@ -1,0 +1,30 @@
+name: mesh
+base: core24
+version: "1.0.0"
+summary: MESH - Uptime Monitor Daemon
+description: |
+  MESH is a lightweight uptime monitoring daemon with TUI.
+  Monitor servers with TCP, HTTP, SSH, and ping checks.
+
+grade: stable
+confinement: strict
+
+parts:
+  mesh:
+    plugin: go
+    source: .
+
+apps:
+  mesh:
+    command: bin/mesh
+    plugs:
+      - network
+      - home
+
+  daemon:
+    command: bin/mesh start
+    daemon: simple
+    restart-condition: on-failure
+    plugs:
+      - network
+      - home

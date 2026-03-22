@@ -1,0 +1,72 @@
+name: Build and Release
+permissions:
+    contents: write
+    packages: write
+on:
+    push:
+        tags:
+            - "v*"
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        strategy:
+            matrix:
+                goos: [linux]
+                goarch: [amd64, arm64]
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                  go-version: "1.23"
+
+            - name: Build
+              env:
+                  GOOS: ${{ matrix.goos }}
+                  GOARCH: ${{ matrix.goarch }}
+              run: |
+                  VERSION=${GITHUB_REF#refs/tags/}
+                  OUTPUT_NAME=mesh-${{ matrix.goos }}-${{ matrix.goarch }}
+
+                  if [ "${{ matrix.goos }}" = "windows" ]; then
+                    OUTPUT_NAME="${OUTPUT_NAME}.exe"
+                  fi
+
+                  mkdir -p dist
+                  go build -ldflags "-X main.Version=${VERSION}" -o dist/${OUTPUT_NAME} .
+
+                  ls -la dist/
+
+            - name: Upload artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: mesh-${{ matrix.goos }}-${{ matrix.goarch }}
+                  path: dist/mesh-*
+
+    release:
+        needs: build
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Download all artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  path: release-artifacts
+
+            - name: Prepare release files
+              run: |
+                  mkdir -p release-files
+                  find release-artifacts -type f -name "mesh-*" -exec cp {} release-files/ \;
+                  ls -la release-files/
+
+            - name: Create Release
+              uses: softprops/action-gh-release@v1
+              with:
+                  files: release-files/mesh-*
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
