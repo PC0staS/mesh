@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/PC0staS/mesh/internal/config"
+	"github.com/PC0staS/mesh/internal/client"
 	"github.com/PC0staS/mesh/internal/monitor"
 	"github.com/manifoldco/promptui"
 )
@@ -129,18 +129,23 @@ func Add(){
 
 	fmt.Printf("Adding server: %s (%s), type: %s, interval: %d, timeout: %d, enabled: %t\n", server.Name, server.Host, server.Type, server.Interval, server.Timeout, server.Enabled)
 
-	cfg, err := config.LoadConfig()
+	// Envía request al daemon
+	request := &client.Request{
+		Command: "add",
+		Server:  server, // Envía el struct completo
+	}
+
+	response, err := client.SendRequest(request)
 	if err != nil {
-		fmt.Printf("Error loading config: %v\n", err)
+		fmt.Printf("Error: %v\n", err)
+		fmt.Println("Is the daemon running? Try: mesh start")
 		return
 	}
 
-	cfg.Servers = append(cfg.Servers, server)
-
-	err = config.SaveConfig(cfg)
-	if err != nil {
-		fmt.Printf("Error saving config: %v\n", err)
+	if !response.Success {
+		fmt.Printf("❌ Error: %s\n", response.Message)
 		return
 	}
-	fmt.Println("Server added successfully")
+
+	fmt.Printf("✅ %s\n", response.Message)
 }

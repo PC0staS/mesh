@@ -3,9 +3,11 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/PC0staS/mesh/internal/client"
 	"github.com/PC0staS/mesh/internal/config"
 	"github.com/manifoldco/promptui"
 )
+
 
 
 
@@ -19,6 +21,7 @@ func Remove() {
 		fmt.Println("No servers configured")
 		return
 	}
+
 	// Select server to remove
 	prompt := promptui.Select{
 		Label: "Select Server to Remove",
@@ -35,14 +38,24 @@ func Remove() {
 		fmt.Printf("Prompt failed %v\n", err)
 		return
 	}
-	serverToRemove := cfg.Servers[index]
 
-	// Remove server from config
-	cfg.Servers = append(cfg.Servers[:index], cfg.Servers[index+1:]...)
-	err = config.SaveConfig(cfg)
+	// Envía request al daemon (con el índice)
+	request := &client.Request{
+		Command: "remove",
+		Server:  float64(index), // Envía el índice como float64
+	}
+
+	response, err := client.SendRequest(request)
 	if err != nil {
-		fmt.Printf("Error saving config: %v\n", err)
+		fmt.Printf("Error: %v\n", err)
+		fmt.Println("Is the daemon running? Try: mesh start")
 		return
 	}
-	fmt.Printf("Server removed: %s (%s), type: %s\n", serverToRemove.Name, serverToRemove.Host, serverToRemove.Type)
+
+	if !response.Success {
+		fmt.Printf("❌ Error: %s\n", response.Message)
+		return
+	}
+
+	fmt.Printf("✅ %s\n", response.Message)
 }

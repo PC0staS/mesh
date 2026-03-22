@@ -1,5 +1,7 @@
 package cmd
 
+import "github.com/PC0staS/mesh/internal/daemon"
+
 func Stop() {
-	// TODO
+	daemon.StopDaemon()
 }
