@@ -57,4 +57,9 @@ func SaveConfig (config *Config) error {
 	err = os.WriteFile(path, data, 0644)
 	return err
 }
-
+func GetSocketPath() string {
+	home, _ := os.UserHomeDir()
+	socketDir := filepath.Join(home, ".cache", "mesh")
+	os.MkdirAll(socketDir, 0700)
+	return filepath.Join(socketDir, "mesh.sock")
+}

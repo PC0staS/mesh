@@ -4,14 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+
+	"github.com/PC0staS/mesh/internal/config"
 )
 
-const SocketPath = "/tmp/mesh.sock"
+var socketPath = config.GetSocketPath()
 
 // SendRequest envía un request al daemon y espera respuesta
 func SendRequest(request *Request) (*Response, error) {
 	// 1. Conecta al socket
-	conn, err := net.Dial("unix", SocketPath)
+	conn, err := net.Dial("unix", socketPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot connect to daemon: %v", err)
 	}

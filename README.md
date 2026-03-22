@@ -13,24 +13,38 @@ MESH is a CLI tool to monitor servers and services easily and extensibly, using 
 
 ## Installation
 
+### Install with Snap (Recommended)
+
+You can install Mesh easily using Snap:
+
+```sh
+sudo snap install mesh
+```
+
+This is the easiest way to get started on most Linux distributions that support Snap.
+
+### Manual Installation
+
 1.  Clone the repository:
-    ```sh
-    git clone https://github.com/PC0staS/mesh.git
-    cd mesh
-    ```
+
+```sh
+git clone https://github.com/PC0staS/mesh.git
+cd mesh
+```
+
 2.  Build the project:
 
-    ```sh
-    go build -o mesh
-    ```
+```sh
+go build -o mesh
+```
 
-    Alternatively, you can use Makefile targets:
+Alternatively, you can use Makefile targets:
 
-        ```sh
-        make build   # Build the binary
-        make install # Install mesh to /usr/local/bin (may require sudo)
-        make install-daemon # Install the mesh.service - You can use this one for a complete install.
-        ```
+      ```sh
+      make build   # Build the binary
+      make install # Install mesh to /usr/local/bin (may require sudo)
+      make install-daemon # Install the mesh.service - You can use this one for a complete install.
+      ```
 
 This will copy the compiled mesh binary to /usr/local/bin so you can run mesh from anywhere.
 
