@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Usage: ./scripts/release.sh v1.2.3
-# Updates only the version in snapcraft.yaml
+# Accepts a version with or without leading 'v'. Commits changes, pushes, and creates tag.
 
 if [ "$#" -ne 1 ]; then
   echo "Usage: $0 vX.Y.Z"
@@ -10,7 +10,8 @@ if [ "$#" -ne 1 ]; then
 fi
 
 RAW_VER="$1"
-# normalize without leading v
+TAG_VER="$RAW_VER"
+# normalize without leading v for files that don't use the 'v' prefix
 NO_V_VER="${RAW_VER#v}"
 
 if [[ ! "$RAW_VER" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -22,19 +23,47 @@ fi
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
-echo "Updating snapcraft.yaml version to $NO_V_VER"
+# Ensure working tree is clean
+if [ -n "$(git status --porcelain)" ]; then
+  echo "Working tree not clean. Commit or stash changes first."
+  git status --porcelain
+  exit 3
+fi
+
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+echo "Current branch: $CURRENT_BRANCH"
+
+# Check tag doesn't already exist
+if git rev-parse "refs/tags/$TAG_VER" >/dev/null 2>&1; then
+  echo "Tag $TAG_VER already exists. Aborting."
+  exit 4
+fi
+
+echo "Updating version to $NO_V_VER (tag: $TAG_VER)"
+
+# Update snapcraft.yaml (version: "x.y.z")
 sed -E -i.bak "s/^version:[[:space:]]+.*/version: \"${NO_V_VER}\"/" snapcraft.yaml
-echo "snapcraft.yaml updated."
+
+
+echo "Files updated. Showing git diff for review:"
+git --no-pager diff -- snapcraft.yaml || true
+
+read -p "Continue and commit changes? [y/N] " CONFIRM
+if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
+  echo "Aborted by user. Restoring backup."
+  mv -f snapcraft.yaml.bak snapcraft.yaml || true
+  exit 5
+fi
+
+# Remove backup file after committing
+git add snapcraft.yaml
+git commit -m "Release ${TAG_VER}"
+git push origin "$CURRENT_BRANCH"
+
+git tag -a "${TAG_VER}" -m "Release ${TAG_VER}"
+git push origin "${TAG_VER}"
+
+echo "Release ${TAG_VER} created and pushed. Cleaning backup."
 rm -f snapcraft.yaml.bak
 
-# Git commit, push, and tag for snapcraft.yaml only
-if [ -n "$(git status --porcelain snapcraft.yaml)" ]; then
-  git add snapcraft.yaml
-  git commit -m "Release $RAW_VER (snapcraft.yaml)"
-  git push origin $(git rev-parse --abbrev-ref HEAD)
-  git tag -a "$RAW_VER" -m "Release $RAW_VER (snapcraft.yaml)"
-  git push origin "$RAW_VER"
-  echo "Git commit, push, and tag completed."
-else
-  echo "No changes to commit."
-fi
+echo "Done."
