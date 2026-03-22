@@ -1,8 +1,8 @@
 .PHONY: build install
 
 build:
-	@rm mesh 2>/dev/null || true
-	@go build -o mesh .
+	@rm -f build/mesh 2>/dev/null || true
+	@go build -o build/mesh .
 
 install: build
-	@cp mesh /usr/local/bin/
+	@cp build/mesh /usr/local/bin/
