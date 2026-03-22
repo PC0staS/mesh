@@ -12,21 +12,7 @@ install: build
 
 install-daemon: install
 	@echo "⚙️  Installing systemd daemon..."
-	@sudo tee /etc/systemd/system/mesh.service > /dev/null <<-'EOF'
-	[Unit]
-	Description=MESH - Uptime Monitor Daemon
-	After=network.target
-
-	[Service]
-	Type=simple
-	User=$(shell whoami)
-	ExecStart=/usr/local/bin/mesh start
-	Restart=on-failure
-	RestartSec=10s
-
-	[Install]
-	WantedBy=multi-user.target
-	EOF
+	@sed "s/YOUR_USER/$(shell whoami)/" mesh.service | sudo tee /etc/systemd/system/mesh.service > /dev/null
 	@sudo systemctl daemon-reload
 	@sudo systemctl enable mesh.service
 	@sudo systemctl start mesh.service

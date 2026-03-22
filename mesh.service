@@ -1,0 +1,13 @@
+[Unit]
+Description=MESH - Monitor Each Service Health
+After=network.target
+
+[Service]
+Type=simple
+User=YOUR_USER
+ExecStart=/usr/local/bin/mesh start
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target

@@ -7,6 +7,7 @@ import (
 )
 
 func Reload() {
+	checkRoot() // Solo root puede recargar (porque muestra status)
 	request := &client.Request{
 		Command: "reload",
 	}

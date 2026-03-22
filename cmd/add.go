@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"os/user"
 
 	"github.com/PC0staS/mesh/internal/client"
 	"github.com/PC0staS/mesh/internal/monitor"
@@ -44,4 +46,13 @@ func Add() {
 	fmt.Printf("✅ %s\n", response.Message)
 
 	Reload() // Muestra status actualizado
+}
+
+func checkRoot() {
+	currentUser, _ := user.Current()
+	if currentUser.Uid != "0" {
+		fmt.Println("❌ Error: this command requires sudo")
+		fmt.Println("   Try: sudo mesh <command>")
+		os.Exit(1)
+	}
 }

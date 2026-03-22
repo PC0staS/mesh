@@ -19,6 +19,7 @@ var (
 )
 
 func Monitor() {
+	checkRoot() // Solo root puede monitorear (porque muestra status)
 	g, err := gocui.NewGui(gocui.OutputNormal)
 	if err != nil {
 		log.Panicln(err)

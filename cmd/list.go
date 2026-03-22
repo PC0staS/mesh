@@ -11,6 +11,7 @@ import (
 )
 
 func List() {
+	checkRoot() // Solo root puede listar (porque muestra status)
 	// Primero, recarga la config en el daemon
 	reloadRequest := &client.Request{
 		Command: "reload",

@@ -5,5 +5,6 @@ import (
 )
 
 func Start() {
+	checkRoot()
 	daemon.StartDaemon()
 }

@@ -11,6 +11,7 @@ import (
 
 
 func Remove() {
+	checkRoot() // Solo root puede eliminar (porque muestra status)
 	// En lugar de leer config.json directamente,
 	// pide la lista al daemon
 	request := &client.Request{
