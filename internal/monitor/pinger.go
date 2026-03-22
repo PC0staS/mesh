@@ -3,6 +3,7 @@ package monitor
 import (
 	"fmt"
 	"net"
+	"net/http"
 	"strings"
 	"time"
 )
@@ -66,22 +67,40 @@ func pingTCP(host string, timeout time.Duration, start time.Time) PingResult {
 
 // pingHTTP intenta hacer conexión HTTP
 func pingHTTP(host string, timeout time.Duration, start time.Time) PingResult {
-	// Limpia la URL
+	original := host // Guarda original para detectar https
+	
+	// Limpia esquemas
+	isHTTPS := strings.Contains(original, "https://")
 	host = strings.TrimPrefix(host, "http://")
 	host = strings.TrimPrefix(host, "https://")
-	host = strings.TrimPrefix(host, "/")  // ← Añade esto
+	host = strings.TrimPrefix(host, "/")
 	
 	// Quita ruta si existe
 	if idx := strings.Index(host, "/"); idx != -1 {
 		host = host[:idx]
 	}
-
-	// Si no tiene puerto, añade :80
+	
+	// Puerto por defecto según protocolo
 	if !strings.Contains(host, ":") {
-		host = host + ":80"
+		if isHTTPS {
+			host = host + ":443"
+		} else {
+			host = host + ":80"
+		}
 	}
 
-	conn, err := net.DialTimeout("tcp", host, timeout)
+	// Construye URL
+	scheme := "http://"
+	if isHTTPS {
+		scheme = "https://"
+	}
+	url := scheme + host
+
+	client := &http.Client{
+		Timeout: timeout,
+	}
+
+	resp, err := client.Get(url)
 	if err != nil {
 		return PingResult{
 			Timestamp:    start,
@@ -90,7 +109,17 @@ func pingHTTP(host string, timeout time.Duration, start time.Time) PingResult {
 			Error:        err.Error(),
 		}
 	}
-	defer conn.Close()
+	defer resp.Body.Close()
+
+	// Check status 200-299
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return PingResult{
+			Timestamp:    start,
+			Success:      false,
+			ResponseTime: time.Since(start),
+			Error:        fmt.Sprintf("HTTP %d", resp.StatusCode),
+		}
+	}
 
 	elapsed := time.Since(start)
 	return PingResult{
